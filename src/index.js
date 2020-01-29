@@ -2,6 +2,7 @@ const input = document.getElementById("input");
 let output = document.getElementById("output");
 
 var g1 = new Guppy("input");
+g1.configure("empty_content", "\\color{grey}{\\text{Type math here...}}")
 g1.event("change", function () {
   // latex()
   text()
