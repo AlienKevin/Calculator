@@ -14,6 +14,7 @@ function text() {
       .replace(/squareroot\(/g, "sqrt(")
       .replace(/absolutevalue\(/g, "abs(")
       .replace(/neg/g, "-")
+      .replace(/text\(/g, "(")
     console.log("TCL: text -> text", text)
     return nerdamer(text)
   }
