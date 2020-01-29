@@ -3,33 +3,36 @@ let output = document.getElementById("output");
 
 var g1 = new Guppy("input");
 g1.event("change", function () {
-  latex()
-  // text()
+  // latex()
+  text()
 });
 
 function text() {
-  try {
+  const getExpr = function() {
     const text = g1.doc().get_content("text")
+      .replace(/squareroot\(/g, "sqrt(")
+      .replace(/absolutevalue\(/g, "abs(")
+      .replace(/neg/g, "-")
     console.log("TCL: text -> text", text)
-    const expr = nerdamer(text)
-    if (expr !== undefined) {
-      const result = expr.evaluate().toString();
-      if (result !== undefined) {
-        output.innerHTML = nerdamer.convertToLaTeX(result).toString()
-      }
-    }
+    return nerdamer(text)
   }
-  catch (ignore) { }
+  compute(getExpr)
 }
 
 function latex() {
-  try {
+  const getExpr = function() {
     const latex = g1.doc().get_content("latex")
-      .replace(/\\dfrac/g, "\\frac")
-      .replace(/\\cdot/g, "*")
+        .replace(/\\dfrac/g, "\\frac")
+        .replace(/\\cdot/g, "*")
     console.log("TCL: latex", latex)
-    const expr = nerdamer.convertFromLaTeX(latex)
-    console.log("TCL: expr", expr)
+    return nerdamer.convertFromLaTeX(latex)
+  }
+  compute(getExpr);
+}
+
+function compute(getExpr) {
+  try {
+    const expr = getExpr()
     output = document.getElementById("output")
     if (expr.symbol !== undefined) {
       if (output.tagName === "svg") {
@@ -38,6 +41,7 @@ function latex() {
         output.id = "output";
         insertAfter(output, input)
       }
+      nerdamer.clearVars()
       const result = expr.evaluate().toString();
       if (result !== undefined) {
         const outputStr = "= " + nerdamer.convertToLaTeX(result).toString()
@@ -47,6 +51,10 @@ function latex() {
       output.innerText = ""
     }
   } catch (err) {
+    if (err instanceof TypeError) {
+      output.innerText = ""
+      return
+    }
     output.setAttribute("data-feather", "alert-octagon")
     feather.replace({
       width: "1.5em",
