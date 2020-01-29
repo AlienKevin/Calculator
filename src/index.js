@@ -1,6 +1,12 @@
 const input = document.getElementById("input");
 let output = document.getElementById("output");
 
+const constants = {
+  g : 9.81,
+  G : 6.67430e-11,
+  k : 9.0e9
+}
+
 var g1 = new Guppy("input");
 g1.configure("empty_content", "\\color{grey}{\\text{Type math here...}}")
 g1.event("change", function () {
@@ -32,6 +38,17 @@ function latex() {
   compute(getExpr);
 }
 
+function setConstants() {
+  Object.entries(constants).forEach(([name, value]) => {
+    nerdamer.setConstant(name, value)
+  })
+}
+
+function resetVars() {
+  nerdamer.clearVars()
+  setConstants()
+}
+
 function compute(getExpr) {
   try {
     const expr = getExpr()
@@ -43,7 +60,7 @@ function compute(getExpr) {
         output.id = "output";
         insertAfter(output, input)
       }
-      nerdamer.clearVars()
+      resetVars()
       const result = expr.evaluate().toString();
       if (result !== undefined) {
         const outputStr = "= " + nerdamer.convertToLaTeX(result).toString()
