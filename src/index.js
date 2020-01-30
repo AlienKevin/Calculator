@@ -63,8 +63,6 @@ function addSlotElement(newIndex) {
 
   editor = new Guppy("input" + newIndex)
   slots[newIndex - 1].editor.deactivate()
-  console.log("TCL: addSlotElement -> newIndex - 1", newIndex - 1)
-  console.log("TCL: addSlotElement -> slots", slots)
   editor.activate()
 
   slot = {
@@ -86,6 +84,19 @@ function text() {
       .replace(/neg/g, "-")
       .replace(/text\(/g, "(")
     console.log("TCL: text -> text", text)
+    const expr = nerdamer(text)
+    if (nerdamer.tree(text).value === "=") {
+      const definedVars = Object.keys(nerdamer.getVars())
+      const freeVars = expr.variables()
+        .filter((varName) =>
+          !definedVars.includes(varName)
+        )
+      if (freeVars.length < 1) {
+        return expr
+      }
+      const solution = nerdamer.solve(text, freeVars[0])
+      return solution
+    }
     return nerdamer(text)
   }
   compute(getExpr)
@@ -109,7 +120,13 @@ function setConstants() {
 }
 
 function resetVars() {
-  nerdamer.clearVars()
+  // const vars = nerdamer.getVars("text")
+  // nerdamer.clearVars()
+  // Object.entries(vars)
+  //   .filter(([name]) => name !== "#")
+  //   .forEach(([name, value]) => {
+  //   nerdamer.setVar(name, value)
+  // })
   setConstants()
 }
 
