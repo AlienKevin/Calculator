@@ -85,21 +85,37 @@ function text() {
       .replace(/text\(/g, "(")
     console.log("TCL: text -> text", text)
     const expr = nerdamer(text)
+    let varName = undefined
     if (nerdamer.tree(text).value === "=") {
       const definedVars = Object.keys(nerdamer.getVars())
       const freeVars = expr.variables()
         .filter((varName) =>
           !definedVars.includes(varName)
         )
-      if (freeVars.length < 1) {
-        return expr
+      if (freeVars.length === 1) {
+        varName = freeVars[0]
+        return [solve(text, varName), varName]
+      } else {
+        const leftExpr = text.substring(0, text.indexOf("="))
+        const leftVars = nerdamer(leftExpr).variables()
+        if (leftVars.length === 1) {
+          varName = leftVars[0]
+        } else if (leftVars.length < 1) {
+          varName = freeVars[0]
+        } else {
+          varName = leftVars[0]
+        }
+        return [solve(text, varName), varName]
       }
-      const solution = nerdamer.solve(text, freeVars[0])
-      return solution
     }
-    return nerdamer(text)
+    return [expr, varName]
   }
   compute(getExpr)
+}
+
+function solve(expr, variable) {
+  const solutions = nerdamer.solve(expr, variable)
+  return solutions
 }
 
 function latex() {
@@ -132,7 +148,7 @@ function resetVars() {
 
 function compute(getExpr) {
   try {
-    const expr = getExpr()
+    const [expr, varName] = getExpr()
     if (expr.symbol !== undefined) {
       if (output.firstElementChild !== null) {
         output.firstElementChild.remove()
@@ -140,7 +156,11 @@ function compute(getExpr) {
       resetVars()
       const result = expr.evaluate()
       if (result !== undefined) {
-        const outputStr = "= " + result.toTeX()
+        const outputStr = (
+          varName === undefined
+            ? "= "
+            : (wrapLaTeXSubscript(varName) + " = ")
+        ) + wrapLaTeXSubscript(result.toTeX())
         katex.render(outputStr, output, { throwOnError: false })
       }
     } else {
@@ -163,6 +183,13 @@ function compute(getExpr) {
     //   content: "<span style=\"font-size: 1.3em\">" + err.toString() + "</span>"
     // })
   }
+}
+
+function wrapLaTeXSubscript(latex) {
+  return (
+    latex.replace(/([a-zA-Z]+)_([a-zA-Z]+)/g, "$1_{$2}")
+      .replace(/([a-zA-Z]+)_([0-9]+)/g, "$1_{$2}")
+  )
 }
 
 function insertAfter(el, referenceNode) {
