@@ -2,14 +2,14 @@ html {
   font-size: 16px
 }
 
-#input {
+.input {
   display:inline-block;
   width: 50vw;
   font-size: 2em;
   padding: 0.3em;
 }
 
-#output {
+.output {
   font-size: 2em;
   padding: 0.3em;
 }

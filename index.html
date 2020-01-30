@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Calculator</title>
-  <link rel="stylesheet" href="./node_modules/guppy-js/guppy-default.min.css">
+  <link rel="stylesheet" href="./node_modules/guppy-js/guppy-default-osk.min.css">
+  <script type="text/javascript" src="./node_modules/guppy-js/guppy_osk.js"></script>
   <script type="text/javascript" src="./node_modules/guppy-js/guppy.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/nerdamer@1.1.2/nerdamer.core.min.js"></script>
 
@@ -20,8 +21,10 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <span id="input"></span>
-  <span id="output"></span>
+  <div id="slot0" class="slot">
+    <span id="input0" class="input"></span>
+    <span id="output0" class="output"></span>
+  </div>
   <script src = "src/index.js"></script>
 </body>
 </html>

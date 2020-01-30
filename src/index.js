@@ -1,22 +1,86 @@
-const input = document.getElementById("input");
-let output = document.getElementById("output");
-
 const constants = {
   g : 9.81,
   G : 6.67430e-11,
   k : 9.0e9
 }
 
-var g1 = new Guppy("input");
-g1.configure("empty_content", "\\color{grey}{\\text{Type math here...}}")
-g1.event("change", function () {
-  // latex()
-  text()
-});
+let input = document.getElementById("input0");
+let output = document.getElementById("output0");
+let editor = new Guppy("input0");
+let slot = {
+  index: 0,
+  input: input,
+  editor: editor,
+  output: output,
+}
+let slots = [slot]
+
+setupEditor()
+Guppy.use_osk(new GuppyOSK({"goto_tab":"arithmetic","attach":"focus"}));
+
+function setupEditor() {
+  editor.configure("empty_content", "\\color{grey}{\\text{Type math here...}}")
+  editor.event("change", function () {
+    // latex()
+    text()
+  });
+  editor.event("done", function() {
+    if (isLastSlot(slot)
+      || isEmptySlot(slot)) {
+      addSlot(slot.index + 1)
+    }
+  })
+}
+
+function isLastSlot(slot) {
+  return slot.index === slots.length - 1
+}
+
+function isEmptySlot(slot) {
+  return slots[slot.index + 1].editor.doc().get_content("text") === ""
+}
+
+function addSlot(newIndex) {
+  addSlotElement(newIndex)
+}
+
+function addSlotElement(newIndex) {
+  slotElement = document.createElement("div")
+  slotElement.id = "slot" + newIndex
+  input = document.createElement("span")
+  input.id = "input" + newIndex
+  output = document.createElement("span")
+  output.id = "output" + newIndex
+
+  slotElement.appendChild(input)
+  slotElement.appendChild(output)
+  const oldSlot = document.getElementById("slot" + ( newIndex - 1 ))
+  oldSlot.insertAdjacentElement("afterend", slotElement)
+
+  slotElement.className = "slot"
+  input.classList.add("input")
+  output.className = "output"
+
+  editor = new Guppy("input" + newIndex)
+  slots[newIndex - 1].editor.deactivate()
+  console.log("TCL: addSlotElement -> newIndex - 1", newIndex - 1)
+  console.log("TCL: addSlotElement -> slots", slots)
+  editor.activate()
+
+  slot = {
+    index: newIndex,
+    input: input,
+    editor: editor,
+    output: output
+  }
+  slots.splice(newIndex, 0, slot)
+
+  setupEditor()
+}
 
 function text() {
   const getExpr = function() {
-    const text = g1.doc().get_content("text")
+    const text = editor.doc().get_content("text")
       .replace(/squareroot\(/g, "sqrt(")
       .replace(/absolutevalue\(/g, "abs(")
       .replace(/neg/g, "-")
@@ -29,7 +93,7 @@ function text() {
 
 function latex() {
   const getExpr = function() {
-    const latex = g1.doc().get_content("latex")
+    const latex = editor.doc().get_content("latex")
         .replace(/\\dfrac/g, "\\frac")
         .replace(/\\cdot/g, "*")
     console.log("TCL: latex", latex)
@@ -52,18 +116,14 @@ function resetVars() {
 function compute(getExpr) {
   try {
     const expr = getExpr()
-    output = document.getElementById("output")
     if (expr.symbol !== undefined) {
-      if (output.tagName === "svg") {
-        output.remove()
-        output = document.createElement("span")
-        output.id = "output";
-        insertAfter(output, input)
+      if (output.firstElementChild !== null) {
+        output.firstElementChild.remove()
       }
       resetVars()
-      const result = expr.evaluate().toString();
+      const result = expr.evaluate()
       if (result !== undefined) {
-        const outputStr = "= " + nerdamer.convertToLaTeX(result).toString()
+        const outputStr = "= " + result.toTeX()
         katex.render(outputStr, output, { throwOnError: false })
       }
     } else {
@@ -74,14 +134,17 @@ function compute(getExpr) {
       output.innerText = ""
       return
     }
-    output.setAttribute("data-feather", "alert-octagon")
+    output.innerText = ""
+    const icon = document.createElement("i")
+    icon.setAttribute("data-feather", "alert-octagon")
+    output.appendChild(icon)
     feather.replace({
       width: "1.5em",
       height: "1.5em"
     })
-    tippy("#output", {
-      content: "<span style=\"font-size: 1.3em\">" + err.toString() + "</span>"
-    })
+    // tippy("#output" + slot.index, {
+    //   content: "<span style=\"font-size: 1.3em\">" + err.toString() + "</span>"
+    // })
   }
 }
 
